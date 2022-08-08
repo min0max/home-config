@@ -1,0 +1,42 @@
+#!/bin/bash
+
+CURRENT_DIR=$(readlink -f `pwd`)
+
+SCRIPT_DIR=$(readlink -f ${0%/*})
+SCRIPT_FILE=${0##*/}
+SCRIPT_BASE=${SCRIPT_FILE%.*}
+
+usage() {
+    echo "Usage: $0 [options] <filename>" 1>&2
+    echo ""
+    exit 1
+}
+
+while getopts dh OPT
+do
+    case $OPT in
+        "d") OPT_DBG="YES"
+            ;;
+        "h") usage
+            ;;
+        "*") usage
+            ;;
+    esac
+done
+shift $((OPTIND - 1))
+
+if ! [ $# -gt 0 ]; then
+    echo -e "ERROR: specify file in command option: $#\n"
+    usage
+fi
+
+FILENAME=${1}
+
+if ! [ -e $FILENAME ]; then
+    echo -e "ERROR: File is not found: $FILENAME\n"
+    usage
+fi
+
+FSYSTEM=`df ${1} | sed -n 2P | awk '{print $1}'`
+
+stat -c %i ${FILENAME} | xargs -I{} sudo debugfs -R "stat <{}>" ${FSYSTEM} | tee

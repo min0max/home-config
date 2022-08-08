@@ -1,0 +1,42 @@
+#!/bin/bash
+
+CURRENT_DIR=$(readlink -f `pwd`)
+
+SCRIPT_DIR=$(readlink -f ${0%/*})
+SCRIPT_FILE=${0##*/}
+SCRIPT_BASE=${SCRIPT_FILE%.*}
+
+# EUT_SSH_TARGET=<ssh hostname>
+
+if [ -z "${EUT_SSH_TARGET}" ]; then
+    echo "[ERROR]: You need to set EUT_SSH_TARGET environemnt variable !"
+    echo ""
+    exit 1
+fi
+
+EUT_SSH_USER=root
+EUT_SSH_DIR=${EUT_SSH_DIR:-"/root"}
+
+if [ ! -e $1 ]; then
+   echo "[ERROR]: specify an execute file as first argument."
+   exit 1
+fi
+
+# Print headers
+echo "# EUT: ${EUT_SSH_TARGET}:${EUT_SSH_DIR}"
+echo "# CMD: ${EUT_SSH_DIR}/$@"
+
+# Copy image to remote target
+scp $1 ${EUT_SSH_TARGET}:${EUT_SSH_DIR}/
+
+# Execute program on remote target
+echo "#-------------------------------------------------"
+echo "# Program start:"
+echo "#-------------------------------------------------"
+TIME_START=$(date +%s.%2N)
+ssh ${EUT_SSH_TARGET} "source /etc/profile; ${EUT_SSH_DIR}/$@"
+# ssh ${EUT_SSH_TARGET} "source /etc/profile; export"
+TIME_END=$(date +%s.%2N)
+echo "#-------------------------------------------------"
+echo "# Program end: $( echo ${TIME_END} - ${TIME_START} | bc ) sec"
+echo "#-------------------------------------------------"
