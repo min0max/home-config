@@ -1,2 +1,2 @@
-# home configuration and tool
-This is back-up of my home configuration and tools
+# HOME configuration and tools
+This is personal home configuration and tools
